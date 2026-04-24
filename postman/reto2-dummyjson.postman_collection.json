@@ -1,0 +1,352 @@
+{
+  "info": {
+    "_postman_id": "reto2-dummyjson-sakila-2026",
+    "name": "Reto 2 - DummyJSON (Postman)",
+    "description": "Reto 2 - Master Profesional en QA y Automatizacion de Pruebas.\n\nCubre los 5 ejercicios de la seccion Postman contra https://dummyjson.com.\n\n**Credenciales usadas:** emilys / emilyspass (las del enunciado `kminchelle / 0lelplR` ya no son validas en la API actual de DummyJSON).\n\n**Orden de ejecucion en Runner:** Ej 1 -> Ej 2 -> Ej 3 -> Ej 4 -> Ej 5.\n\n**Variables de entorno usadas:** `base_url`, `username`, `password`, `token`, `session_valid`, `expired_token`, `expensive_count`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Ej 1 - Login (basico)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// ===========================================================",
+              "// Ejercicio 1 - BASICO: Login y validacion inicial",
+              "// POST /auth/login",
+              "// ===========================================================",
+              "",
+              "pm.test('Status code es 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "// Parseo del JSON (valida que la respuesta sea JSON valido)",
+              "let jsonData;",
+              "pm.test('El body se parsea correctamente como JSON', function () {",
+              "    jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('object');",
+              "});",
+              "",
+              "pm.test('Existe accessToken en la respuesta', function () {",
+              "    pm.expect(jsonData).to.have.property('accessToken');",
+              "    pm.expect(jsonData.accessToken).to.be.a('string').and.not.empty;",
+              "});",
+              "",
+              "pm.test('Username coincide con el enviado en el login', function () {",
+              "    pm.expect(jsonData.username).to.eql(pm.environment.get('username'));",
+              "});",
+              "",
+              "// Guardamos el token para los siguientes requests",
+              "if (jsonData && jsonData.accessToken) {",
+              "    pm.environment.set('token', jsonData.accessToken);",
+              "}",
+              "",
+              "// ===========================================================",
+              "// Soporte para Ejercicio 5 (retry):",
+              "// Si entramos aca desde un 401 de /auth/me, ya refrescamos el",
+              "// token arriba. Reseteamos la bandera y detenemos el runner",
+              "// para evitar ciclos.",
+              "// ===========================================================",
+              "if (pm.environment.get('expired_token') === 'true') {",
+              "    console.log('[Retry] Login de refresh exitoso. Nuevo token guardado.');",
+              "    pm.environment.set('expired_token', 'false');",
+              "    pm.execution.setNextRequest(null);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "login"]
+        },
+        "description": "Ej 1 (basico): Login contra DummyJSON. Valida status 200, existencia de accessToken, username correcto y parseo JSON. Ademas guarda el token en la variable de entorno para los siguientes ejercicios."
+      },
+      "response": []
+    },
+    {
+      "name": "Ej 2 - Auth Me (validacion de sesion)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// ===========================================================",
+              "// Ejercicio 2 - INTERMEDIO: Validacion de sesion (token en uso)",
+              "// GET /auth/me con Authorization: Bearer {{token}}",
+              "// ===========================================================",
+              "",
+              "const status = pm.response.code;",
+              "",
+              "// Logica condicional: guardar session_valid segun el status",
+              "if (status === 200) {",
+              "    pm.environment.set('session_valid', 'true');",
+              "",
+              "    const data = pm.response.json();",
+              "",
+              "    pm.test('Status 200', function () {",
+              "        pm.response.to.have.status(200);",
+              "    });",
+              "",
+              "    pm.test('Existe email en la respuesta', function () {",
+              "        pm.expect(data).to.have.property('email');",
+              "        pm.expect(data.email).to.be.a('string').and.not.empty;",
+              "    });",
+              "",
+              "    pm.test('Username coincide con el enviado en el login', function () {",
+              "        pm.expect(data.username).to.eql(pm.environment.get('username'));",
+              "    });",
+              "} else {",
+              "    pm.environment.set('session_valid', 'false');",
+              "",
+              "    pm.test('Sesion invalida registrada (session_valid = false)', function () {",
+              "        pm.expect(pm.environment.get('session_valid')).to.eql('false');",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/me",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "me"]
+        },
+        "description": "Ej 2 (intermedio): Valida la sesion usando el token guardado. Logica condicional: session_valid = true si status 200, false en caso contrario."
+      },
+      "response": []
+    },
+    {
+      "name": "Ej 3 - Login (manejo de token)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// ===========================================================",
+              "// Ejercicio 3 - INTERMEDIO: Manejo de token",
+              "// Del login, guardar accessToken en variable 'token'.",
+              "// El test debe fallar si no se guarda correctamente.",
+              "// ===========================================================",
+              "",
+              "pm.test('Status code es 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "",
+              "// Guardar accessToken en la variable 'token'",
+              "pm.environment.set('token', jsonData.accessToken);",
+              "",
+              "pm.test(\"accessToken fue guardado en la variable 'token'\", function () {",
+              "    const saved = pm.environment.get('token');",
+              "    pm.expect(saved, 'variable token').to.not.be.null;",
+              "    pm.expect(saved, 'variable token').to.not.be.undefined;",
+              "    pm.expect(saved).to.be.a('string').and.not.empty;",
+              "});",
+              "",
+              "pm.test('El token guardado coincide con el accessToken de la respuesta', function () {",
+              "    pm.expect(pm.environment.get('token')).to.eql(jsonData.accessToken);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "login"]
+        },
+        "description": "Ej 3 (intermedio): Centrado en el manejo del token. Guarda accessToken en la variable `token` y valida explicitamente que se haya persistido (no null, no undefined, no vacio)."
+      },
+      "response": []
+    },
+    {
+      "name": "Ej 4 - Products (validacion de lista con logica)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// ===========================================================",
+              "// Ejercicio 4 - DIFICIL: Validacion de lista con logica",
+              "// GET /products",
+              "// ===========================================================",
+              "",
+              "pm.test('Status 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "const products = body.products || [];",
+              "",
+              "pm.test('Se recibio un array de productos no vacio', function () {",
+              "    pm.expect(products).to.be.an('array').that.is.not.empty;",
+              "});",
+              "",
+              "// --- Validaciones por producto (iteracion interna) ---",
+              "pm.test('Todos los productos tienen price > 0', function () {",
+              "    products.forEach(function (p) {",
+              "        pm.expect(p.price, 'price de ' + p.title).to.be.a('number').and.to.be.greaterThan(0);",
+              "    });",
+              "});",
+              "",
+              "pm.test('Todos los productos tienen stock >= 0', function () {",
+              "    products.forEach(function (p) {",
+              "        pm.expect(p.stock, 'stock de ' + p.title).to.be.a('number').and.to.be.at.least(0);",
+              "    });",
+              "});",
+              "",
+              "// --- Logica condicional: price > 100 -> debe existir discountPercentage ---",
+              "pm.test('Productos con price > 100 tienen discountPercentage', function () {",
+              "    const caros = products.filter(function (p) { return p.price > 100; });",
+              "    caros.forEach(function (p) {",
+              "        pm.expect(p, 'producto ' + p.title).to.have.property('discountPercentage');",
+              "        pm.expect(p.discountPercentage, 'discountPercentage de ' + p.title).to.not.be.null;",
+              "        pm.expect(p.discountPercentage).to.not.be.undefined;",
+              "    });",
+              "});",
+              "",
+              "// --- Contar productos con price > 50 y guardar ---",
+              "const expensiveCount = products.filter(function (p) { return p.price > 50; }).length;",
+              "pm.environment.set('expensive_count', expensiveCount);",
+              "",
+              "pm.test('expensive_count guardado correctamente (productos con price > 50): ' + expensiveCount, function () {",
+              "    pm.expect(expensiveCount).to.be.a('number').and.to.be.at.least(0);",
+              "    pm.expect(Number(pm.environment.get('expensive_count'))).to.eql(expensiveCount);",
+              "});",
+              "",
+              "console.log('Productos con price > 50:', expensiveCount);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/products?limit=100",
+          "host": ["{{base_url}}"],
+          "path": ["products"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "100",
+              "description": "Traemos 100 productos para cubrir todo el catalogo de DummyJSON (son aprox 194 en total; 100 es el maximo por pagina para demostrar logica sin paginar)."
+            }
+          ]
+        },
+        "description": "Ej 4 (dificil): Recorre todos los productos y valida price > 0 y stock >= 0. Si price > 100 debe existir discountPercentage. Cuenta productos con price > 50 y los guarda en `expensive_count`."
+      },
+      "response": []
+    },
+    {
+      "name": "Ej 5 - Auth Me (flujo automatico con retry)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// ===========================================================",
+              "// Ejercicio 5 - DIFICIL: Flujo automatico (retry login)",
+              "// - Si /auth/me responde 401 -> expired_token = true + redirigir",
+              "//   al login.",
+              "// - Si login es exitoso -> guardar nuevo token (lo hace Ej 1).",
+              "// - Si no expira -> continuar flujo normal.",
+              "// ===========================================================",
+              "",
+              "const status = pm.response.code;",
+              "",
+              "pm.test('Status esperado (200 o 401)', function () {",
+              "    pm.expect([200, 401]).to.include(status);",
+              "});",
+              "",
+              "if (status === 401) {",
+              "    console.warn('[Retry] Token invalido/expirado. Redirigiendo a Login...');",
+              "    pm.environment.set('expired_token', 'true');",
+              "    pm.environment.set('session_valid', 'false');",
+              "",
+              "    pm.test('Se marco expired_token = true', function () {",
+              "        pm.expect(pm.environment.get('expired_token')).to.eql('true');",
+              "    });",
+              "",
+              "    // Redirigir automaticamente al request de Login (Ej 1)",
+              "    pm.execution.setNextRequest('Ej 1 - Login (basico)');",
+              "} else if (status === 200) {",
+              "    pm.environment.set('expired_token', 'false');",
+              "    pm.environment.set('session_valid', 'true');",
+              "",
+              "    const data = pm.response.json();",
+              "",
+              "    pm.test('Sesion vigente: existe email', function () {",
+              "        pm.expect(data).to.have.property('email');",
+              "    });",
+              "",
+              "    pm.test('session_valid = true (flujo normal continua)', function () {",
+              "        pm.expect(pm.environment.get('session_valid')).to.eql('true');",
+              "    });",
+              "    // Sin setNextRequest: sigue el orden normal de la coleccion.",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/me",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "me"]
+        },
+        "description": "Ej 5 (dificil): Flujo automatico. Si el token esta expirado (/auth/me responde 401), marca `expired_token = true` y redirige al Login (Ej 1) para refrescarlo. El Login detecta que viene de un retry y detiene el runner tras refrescar, evitando ciclos. Si el status es 200, continua el flujo normal.\n\n**Para probar el retry manualmente:**\n1. Correr la coleccion completa una vez (todo verde).\n2. En el environment, editar `token` y poner un valor invalido (ej: `invalid`).\n3. Volver a correr SOLO el Ej 5 -> recibira 401 -> se redirigira al Ej 1 -> refrescara el token -> se detendra.\n4. Volver a correr el Ej 5 -> ahora devolvera 200."
+      },
+      "response": []
+    }
+  ]
+}
