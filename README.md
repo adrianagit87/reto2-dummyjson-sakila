@@ -21,7 +21,7 @@ reto2-dummyjson-sakila/
 
 ---
 
-## Seccion 1 - Postman (DummyJSON)
+## Sección 1 - Postman (DummyJSON)
 
 ### Como ejecutar
 
@@ -32,7 +32,7 @@ reto2-dummyjson-sakila/
 
 ### Nota importante sobre las credenciales
 
-El enunciado indica usar `kminchelle / 0lelplR`. **Esas credenciales ya no son validas** en la API actual de DummyJSON (devuelven `400 Invalid credentials`). Se verifico contra el servicio en vivo:
+El enunciado indica usar `kminchelle / 0lelplR`. **Esas credenciales ya no son válidas** en la API actual de DummyJSON (devuelven `400 Invalid credentials`). Se verificó contra el servicio en vivo:
 
 ```bash
 # Credenciales del enunciado -> 400
@@ -48,21 +48,21 @@ curl -s -X POST 'https://dummyjson.com/auth/login' \
 # -> {"accessToken":"eyJ...","username":"emilys", ...}
 ```
 
-Se usaron las credenciales vigentes (`emilys / emilyspass`, documentadas en la pagina oficial de DummyJSON). La logica evaluada (tests, condicionales, retry) es identica.
+Se usaron las credenciales vigentes (`emilys / emilyspass`, documentadas en la pagina oficial de DummyJSON). La lógica evaluada (tests, condicionales, retry) es idéntica.
 
 ### Mapa de ejercicios a requests
 
 | Ej | Request en la coleccion               | Endpoint          | Lo que valida                                                                                     |
 |----|---------------------------------------|-------------------|---------------------------------------------------------------------------------------------------|
-| 1  | Ej 1 - Login (basico)                 | POST /auth/login  | Status 200, parseo JSON, existe `accessToken`, `username` correcto.                               |
-| 2  | Ej 2 - Auth Me (validacion de sesion) | GET /auth/me      | Bearer token, status 200, existe `email`, `username` coincide, condicional `session_valid`.      |
+| 1  | Ej 1 - Login (básico)                 | POST /auth/login  | Status 200, parseo JSON, existe `accessToken`, `username` correcto.                               |
+| 2  | Ej 2 - Auth Me (validación de sesión) | GET /auth/me      | Bearer token, status 200, existe `email`, `username` coincide, condicional `session_valid`.      |
 | 3  | Ej 3 - Login (manejo de token)        | POST /auth/login  | Guarda `accessToken` en variable `token` y valida que no sea null/undefined/vacio.                |
 | 4  | Ej 4 - Products (lista con logica)    | GET /products     | Itera productos: `price > 0`, `stock >= 0`, si `price > 100` debe existir `discountPercentage`. Cuenta `expensive_count` (price > 50). |
 | 5  | Ej 5 - Auth Me (retry)                | GET /auth/me      | Flujo automatico: si 401 -> `expired_token=true` + `setNextRequest('Ej 1 - Login')`. Si 200 -> flujo normal. |
 
 ### Variables del environment
 
-| Variable          | Proposito                                                |
+| Variable          | Propósito                                                |
 |-------------------|----------------------------------------------------------|
 | `base_url`        | `https://dummyjson.com`                                  |
 | `username`        | Usuario del login (reutilizado en asserts)               |
@@ -74,9 +74,9 @@ Se usaron las credenciales vigentes (`emilys / emilyspass`, documentadas en la p
 
 ### Como probar el retry (Ej 5) manualmente
 
-1. Correr la coleccion completa una vez -> todo verde, token valido.
-2. En el environment, editar `token` y poner un valor invalido (ej `invalid`).
-3. Correr solo el **Ej 5** -> recibira 401 -> el script marca `expired_token = true` y hace `setNextRequest('Ej 1 - Login (basico)')`.
+1. Correr la colección completa una vez -> todo verde, token válido.
+2. En el environment, editar `token` y poner un valor inválido (ej `invalid`).
+3. Correr solo el **Ej 5** -> recibira 401 -> el script marca `expired_token = true` y hace `setNextRequest('Ej 1 - Login (básico)')`.
 4. Ej 1 detecta que `expired_token === 'true'`, refresca el token y ejecuta `setNextRequest(null)` para detener el runner y evitar bucles.
 5. Volver a correr el Ej 5 -> ahora devuelve 200 y el flujo continua normal.
 
@@ -89,12 +89,12 @@ Se usaron las credenciales vigentes (`emilys / emilyspass`, documentadas en la p
 Sakila en **SQLite** (port oficial del dump original de MySQL). La eleccion de SQLite se debe a que:
 
 - Es el motor que ya viene preinstalado en macOS (`sqlite3`), no requiere servicio separado.
-- El schema relevante (`actor`, `film`, `category`, `film_category`, `customer`, `rental`, `payment`) es identico al de Sakila oficial.
+- El schema relevante (`actor`, `film`, `category`, `film_category`, `customer`, `rental`, `payment`) es idêntico al de Sakila oficial.
 - Las queries del reto usan solo SQL estandar (`SELECT`, `JOIN`, `GROUP BY`, `COUNT`, `SUM`, `ORDER BY`), compatibles con ambos motores.
 
 ### Como ejecutar
 
-**Opcion A - DBeaver (cliente grafico, recomendada)**
+**Opción A - DBeaver (cliente grafico, recomendada)**
 
 1. `Database -> New Database Connection` -> elegir **SQLite** -> `Next`.
 2. En **Path**, seleccionar `sql/sakila.db` (si DBeaver pide descargar los drivers, aceptar).
@@ -105,7 +105,7 @@ Sakila en **SQLite** (port oficial del dump original de MySQL). La eleccion de S
    - `Cmd + Alt + Enter` -> corre el script completo (abre una pestania de resultados por cada `SELECT`).
 6. Para exportar resultados: click derecho sobre la grilla -> `Export data...` (CSV, Excel, HTML, Markdown).
 
-**Opcion B - Terminal (sin instalar nada, `sqlite3` ya viene con macOS)**
+**Opción B - Terminal (sin instalar nada, `sqlite3` ya viene con macOS)**
 
 ```bash
 cd sql/
