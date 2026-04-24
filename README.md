@@ -1,7 +1,7 @@
 # Reto 2 - Postman (DummyJSON) + SQL (Sakila)
 
 **Autora:** Adriana Troche Robles
-**Master Profesional en QA y Automatizacion de Pruebas**
+**Máster Profesional en QA y Automatización de Pruebas**
 **Fecha:** 23 de abril de 2026
 
 ---
